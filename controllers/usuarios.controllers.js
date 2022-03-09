@@ -2,17 +2,36 @@ const { response, request } = require('express')
 const bcryptjs = require('bcryptjs')
 const Usuario = require('../models/usuario')
 
-const usuariosGet = (req = request, res = response) => {
+const usuariosGet = async(req = request, res = response) => {
+    // Argumentos Apcionales que vienen desde el query
+    const { limite = 5, desde = 0 } = req.query
 
-    const { q, nombre = 'No name', apikey } = req.query;
+    // Estraemos solo los estados que son verdaderos
+    const query = { estado: true }
 
-    res.json({
-        ok: true,
-        msg: 'get API - Controlador',
-        q,
-        nombre,
-        apikey
-    })
+    //const total  = await Usuario.countDocuments(query)
+    if (limite == Number(limite) & desde == Number(desde)){
+        //const usuarios = await Usuario.find(query)
+        //.skip( Number( desde ))
+        //.limit(Number( limite ))
+
+        // Estamos procesando las constantes al mismo tiempo con un solo await
+        const [ total, usuarios ] = await Promise.all([
+            Usuario.countDocuments(query),
+            Usuario.find(query)
+                .skip( Number( desde ))
+                .limit(Number( limite ))
+
+        ])
+
+        res.json({
+            total,
+            usuarios
+        })
+    }else{
+        console.log('Acaba de ocurrir un error');
+        throw new Error(`Tienes que ingresar NUMEROS`)
+    }
 }
 
 const usuariosPost = async(req, res) => {
@@ -27,16 +46,13 @@ const usuariosPost = async(req, res) => {
     // Guardar en DB
     await usuario.save()
 
-    res.json({
-        ok: true,
-        usuario
-    })
+    res.json(usuario)
 }
 
 const usuariosPut = async(req, res) => {
 
     const id = req.params.id
-    const { password, google, correo, ...resto } = req.body
+    const { _id, password, google, correo, ...resto } = req.body
 
     // TODO validar contra base de datos
     if ( password ){
@@ -49,7 +65,6 @@ const usuariosPut = async(req, res) => {
 
     res.json({
         ok: true,
-        msg: 'put API - Controlador',
         usuario
     })
 }
@@ -61,11 +76,16 @@ const usuariosPatch = (req, res) => {
     })
 }
 
-const usuariosDelete =(req, res) => {
-    res.json({
-        ok: true,
-        msg: 'Delete API - Controlador'
-    })
+const usuariosDelete = async(req, res) => {
+
+    const { id } = req.params
+
+    // Fisicamente lo borramos
+    // const usuario = await Usuario.findByIdAndDelete( id )
+    const estado = {estado: false} 
+    const usuario = await Usuario.findByIdAndUpdate( id, estado ) 
+
+    res.json(usuario)
 }
 
 module.exports = {
