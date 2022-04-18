@@ -3,7 +3,7 @@ const bcryptjs = require('bcryptjs')
 const Usuario = require('../models/usuario')
 
 const usuariosGet = async(req = request, res = response) => {
-    // Argumentos Apcionales que vienen desde el query
+    // Argumentos Opcionales que vienen desde el query
     const { limite = 5, desde = 0 } = req.query
 
     // Estraemos solo los estados que son verdaderos
