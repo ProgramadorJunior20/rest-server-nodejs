@@ -1,10 +1,10 @@
 const { response } = require("express")
-const { Categoria } = require('../models')
+const { Producto } = require('../models')
 
 
-// obtenerCategorias - paginado - total - populate
+// obtenerProductos - paginado - total - populate
 
-const obtenerCategorias = async(req, res = response) => {
+const obtenerProductos = async(req, res = response) => {
 
     try {
         // Argumentos Opcionales que vienen desde el query
@@ -26,10 +26,11 @@ const obtenerCategorias = async(req, res = response) => {
         if ( limite == Number(limite) & desde == Number(desde) ) {
             
             // Estamos procesando las constantes al mismo tiempo con un solo await
-            const [ total, categorias ] = await Promise.all([
-                Categoria.countDocuments(query),
-                Categoria.find(query)
+            const [ total, productos ] = await Promise.all([
+                Producto.countDocuments(query),
+                Producto.find(query)
                     .populate('usuario', 'nombre')
+                    .populate('categoria', 'nombre')
                     .skip( Number( desde ))
                     .limit(Number( limite ))
             ])
@@ -37,7 +38,7 @@ const obtenerCategorias = async(req, res = response) => {
             res.status(200).json(
                 {
                     total,
-                    categorias  
+                    productos  
                 }
             )
         }
@@ -51,19 +52,20 @@ const obtenerCategorias = async(req, res = response) => {
     }
 }
 
-// obtenerCategoria - populate {}
+// obtenerProducto - populate {}
 
-const obtenerCategoria = async (req, res = response) => {
+const obtenerProducto = async (req, res = response) => {
 
     const { id } = req.params
 
     try {
-        const categoria = await Categoria.findById( id )
-                                .populate('usuario', 'nombre');
+        const producto = await Producto.findById( id )
+                                .populate('usuario', 'nombre')
+                                .populate('categoria', 'nombre');
 
         res.status(200).json(
             {
-                categoria
+                producto
             }
         )
         
@@ -76,33 +78,34 @@ const obtenerCategoria = async (req, res = response) => {
     }
 }
 
-// crearCategoria -
-const crearCategoria = async (req, res = response) => {
+// crearProducto -
+const crearProducto = async (req, res = response) => {
 
     try {
-        const nombre = req.body.nombre.toUpperCase() 
+        const {estado, usuario, ...body} = req.body
 
-        const categoriaDB = await Categoria.findOne({ nombre })
+        const productoDB = await Producto.findOne({ nombre: body.nombre })
 
     
-        if ( categoriaDB ) {
+        if ( productoDB ) {
             return res.status(400).json({
-                msg: `La categoria ${ categoriaDB.nombre }, ya existe`
+                msg: `El producto ${ productoDB.nombre }, ya existe`
             });
         }
 
         // Generar la data a guardar
         const data = { 
-            nombre,
+            ...body,
+            nombre: body.nombre.toUpperCase() ,
             usuario: req.usuario._id
         }
 
-        const categoria = new Categoria( data )
+        const producto = new Producto( data )
 
         // Guardar en DB
-        await categoria.save()
+        await producto.save()
 
-        res.status(201).json(categoria)
+        res.status(201).json(producto)
     } catch (error) {
         res.status(400).json({
             msg: 'Acaba de ocurrir un error'
@@ -111,22 +114,25 @@ const crearCategoria = async (req, res = response) => {
 
 }
 
-// actualizarCategoria
-const actualizarCategoria = async (req, res = response) => {
+// actualizarProductos
+const actualizarProducto = async (req, res = response) => {
     
     const { id } = req.params
     try {
         
         const  {estado, usuario, ...data}  = req.body
 
-        data.nombre = data.nombre.toUpperCase() 
+        if ( data.nombre ) {
+            data.nombre = data.nombre.toUpperCase() 
+        }
+
         data.usuario = req.usuario._id
 
-        const categoria = await Categoria.findByIdAndUpdate( id, data, { new: true })
+        const producto = await Producto.findByIdAndUpdate( id, data, { new: true })
 
         res.status(400).json({
             ok: true,
-            categoria
+            producto
         })
 
     } catch (error) {
@@ -137,19 +143,19 @@ const actualizarCategoria = async (req, res = response) => {
 
 }
 
-// borrarCategoria - estado - false
+// borrarProducto - estado - false
 
-const borrarCategoria = async (req, res = response) => {
+const borrarProducto = async (req, res = response) => {
     const { id } = req.params
     try {
 
         // Fisicamente lo borramos
         // const usuario = await Usuario.findByIdAndDelete( id )
         const estado = {estado: false} 
-        const categoriaBorrada = await Categoria.findByIdAndUpdate( id, estado, { new: true} ) 
+        const productoBorrada = await Producto.findByIdAndUpdate( id, estado, { new: true} ) 
     
     
-        res.status(200).json( categoriaBorrada )
+        res.status(200).json( productoBorrada )
 
     } catch (error) {
         res.status(400).json({
@@ -163,9 +169,9 @@ const borrarCategoria = async (req, res = response) => {
 
 
 module.exports = {
-    crearCategoria,
-    obtenerCategorias,
-    obtenerCategoria,
-    actualizarCategoria,
-    borrarCategoria
+    crearProducto,
+    obtenerProductos,
+    obtenerProducto,
+    actualizarProducto,
+    borrarProducto
 }
