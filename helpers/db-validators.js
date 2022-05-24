@@ -58,10 +58,23 @@ const ExisteCategoriaPorid = async(id = '') => {
     }
 }
 
+/**
+ * validar colecciones permitidas
+ */
+const coleccionesPermitidas = (coleccion = '', colecciones = []) => {
+
+    const incluida = colecciones.includes( coleccion );
+    if ( !incluida ) {
+        throw new Error(`La coleccion ${ coleccion } no es permitida. permitidas: ${ colecciones }`);
+    }
+    return true;
+} 
+
 module.exports = {
     esRoleValido,
     emailExiate,
     existeUsuarioPorId,
     ExisteCategoriaPorid,
-    ExisteProductoPorid
+    ExisteProductoPorid,
+    coleccionesPermitidas,
 }
