@@ -4,3 +4,6 @@ node_modules/
 
 # local env files
 .env
+
+uploads/productos/**.*
+uploads/usuarios/**.*
